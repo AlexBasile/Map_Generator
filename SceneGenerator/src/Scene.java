@@ -23,7 +23,6 @@ import javax.imageio.ImageIO;
  10 = seat + person
 
  */
-//matrice fondamentale rappresentante la scena
 
 public class Scene {
 
@@ -35,23 +34,35 @@ public class Scene {
     //largezza e altezza finestra
     float w_width, w_height;
 
+    //matrice fondamentale rappresentante la scena 
     int[][] scene;
 
+    //percentuale della finestra che viene occupata dalla scena
     int perc;
 
+    //array di immagini da disegnare sulla scena sono nello stesso ordine dello 
+    //schema di valori della scena però traslato di -1 visto che per le celle 
+    //empty non bisogna disegnare nulla
+    //cioè in 0 c'è wall (1), in 1 c'è seat (2), e cosi via 
     BufferedImage[] images;
+
+    public Scene() {
+        
+    }
 
     public Scene(int num_x, int num_y, float w_width, float w_height) {
         this.w_width = w_width;
         this.w_height = w_height;
-
         scene = new int[num_x][num_y];
+        //genero la scena della dimensione specificata
         this.resize(num_x, num_y);
+        //inizializzo la scena con i valori di default e cioè con i muri su tutto il bordo della scena
         this.initScene(scene);
-        this.loadImages("img/");
+        //carico tutte le image in ram
+        this.loadImages();
     }
 
-    public void loadImages(String path) {
+    public void loadImages() {
         images = new BufferedImage[10];
         try {
             images[0] = ImageIO.read(new File("./img/wall.jpeg"));
@@ -70,30 +81,43 @@ public class Scene {
     }
 
     public void drawScene(Graphics2D g) {
-
+        //calcolo le coordinate di inizio della scena partendo a disegnare 
+        //dall'angolo in alto a sinistra della nostra scena
         float x0 = (w_width - c_width * num_x) / 2;
         float y0 = (w_height - c_height * num_y) / 2;
+
         g.setColor(Color.BLACK);
 
+        //doppio ciclo sulla matrice
         for (int i = 0; i < scene.length; i++) {
             for (int j = 0; j < scene[i].length; j++) {
+                //calcolo la posizione x,y dell'angolo in alto a sinistra della 
+                //cella corrente
                 int x = (int) (x0 + i * c_width);
                 int y = (int) (y0 + j * c_height);
+                //se la cella non è vuota, allora disegno l'immagine corrispondente
                 if (scene[i][j] > 0) {
                     g.drawImage(images[scene[i][j] - 1], x, y, (int) (c_width - 1), (int) (c_height - 1), null);
                 }
+
+                //traccio il rettangolo della cella
                 g.drawRect(x, y, (int) (c_width - 1), (int) (c_height - 1));
             }
         }
     }
 
     public void resize(int num_x, int num_y) {
+        //creo una scena con la nuova dimensione
         int[][] new_scene = new int[num_x][num_y];
+        //percentuale che la scena al massimo o sulle x o sulle y può occupare
         perc = 90;
+        //salvo il numero di celle sulle x e sulle y
         this.num_x = num_x;
         this.num_y = num_y;
+        //calcolo la larghezza delle celle
         c_width = (w_width * perc / 100) / num_x;
         c_height = (w_height * perc / 100) / num_y;
+
         if (c_width > c_height) {
             c_width = c_height;
         } else {
@@ -121,23 +145,24 @@ public class Scene {
             }
         }
     }
-    
+
     String exportHistory() {
-        String history = ""; int count = 1;
+        String history = "";
+        int count = 1;
         for (int i = 0; i < scene.length; i++) {
-           for (int j = 0; j < scene[i].length; j++) {
-               if(scene[i][j] == 8) {  //controllo che la cella contenga una persona
-                   history += "\n(personstatus\n\t(step 0)\n\t(time 0)\n\t(ident C"+ count +")\n";
-                   history += "\t(pos-r " + (scene[i].length - j) + ")\n";
-                   history += "\t(pos-c " + (i+1) + ")\n";
-                   history += "\t(activity seated)\n)\n";
-                   count++;
-               }
-           }
+            for (int j = 0; j < scene[i].length; j++) {
+                if (scene[i][j] == 8) {  //controllo che la cella contenga una persona
+                    history += "\n(personstatus\n\t(step 0)\n\t(time 0)\n\t(ident C" + count + ")\n";
+                    history += "\t(pos-r " + (scene[i].length - j) + ")\n";
+                    history += "\t(pos-c " + (i + 1) + ")\n";
+                    history += "\t(activity seated)\n)\n";
+                    count++;
+                }
+            }
         }
         return history;
     }
-    
+
     public String exportScene() {
         String map = "(maxduration 100)\n";
 
@@ -245,7 +270,7 @@ public class Scene {
         map += "\n" + s;
         return map;
     }
-    
+
     String click(int x, int y, int state) {
         float x0 = (w_width - c_width * num_x) / 2;
         float y0 = (w_height - c_height * num_y) / 2;
@@ -269,5 +294,20 @@ public class Scene {
             result = "Hai cliccato fuori dalla scena.";
         }
         return result;
+    }
+
+    public void setNumCelle(int num_x, int num_y) {
+        this.num_x = num_x;
+        this.num_y = num_y;
+        scene = new int[num_x][num_y];
+    }
+
+    public void setCella(int x, int y, int value) {
+        scene[x][y] = value;
+    }
+    
+    public void setSizeScreen(float w_width, float w_height){
+        this.w_height=w_height;
+        this.w_width = w_width;
     }
 }
