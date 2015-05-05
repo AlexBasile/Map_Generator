@@ -56,13 +56,14 @@ public class ScenePanel extends javax.swing.JPanel {
         Graphics2D g2 = (Graphics2D) g; // cast g to Graphics2D
 
         if (s != null) {
-            s.drawScene(g2);
+            s.drawScene(g2, this.getWidth(), this.getHeight());
         }
     }
 
     Scene s;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
     void init(MenuPannello menuPanel) {
         s = new Scene(10, 10, this.getWidth(), this.getHeight());
         this.menuPanel = menuPanel;
@@ -74,21 +75,25 @@ public class ScenePanel extends javax.swing.JPanel {
     }
 
     void exportScene(String text) {
+        //richiamo l'export della scena il quale mi dará una stringa con tutto il codice clips corrispondente
         String sceneFile = s.exportScene();
+        //richiamo l'export della history il quale mi dará una stringa con tutto il codice clips corrispondente
         String historyFile = s.exportHistory();
-        //System.out.println(textFile);
         try {
-            String nome = this.menuPanel.getNomeFile();
-            if (nome.length() > 0 && nome != null) {
-                Files.write(Paths.get("./" + nome + ".clp"), sceneFile.getBytes());
-                this.menuPanel.printMsg("File creato \n" + Paths.get("./" + nome + ".clp"));
+            if (text.length() > 0 && text != null) {
+                //scrivo il file della mappa
+                Files.write(Paths.get(text + "/InitMap.txt"), sceneFile.getBytes());
+                this.menuPanel.printMsg("File creato \n" + Paths.get(text + "/InitMap.txt"));
 
-                if (historyFile.length() > 0) //scrivo il file della history solo se sono  
+                if (historyFile.length() > 0) //scrivo il file della history solo se sono
                 {                               //sono state aggiunte persone alla scena
-                    Files.write(Paths.get("./" + nome + "_history.clp"), historyFile.getBytes());
-                    this.menuPanel.printMsg("File creato \n" + Paths.get("./" + nome + "_history.clp"));
+                    Files.write(Paths.get(text + "/history.txt"), historyFile.getBytes());
+                    this.menuPanel.printMsg("File creato \n" + Paths.get(text + "/history.txt"));
                 }
-                loader.salva_info_mappa(s, nome);
+                //scrivo il file json con la mappa scritta
+                loader.salva_info_mappa(s, text);
+                this.menuPanel.printMsg("File creato \n" + Paths.get(text + "/InfoMappa.json"));
+
             } else {
                 this.menuPanel.errorMsg("Inserire un nome valido");
             }
@@ -100,7 +105,9 @@ public class ScenePanel extends javax.swing.JPanel {
 
     void click(int x, int y, int state) {
 
+        //leggo il click e passo i valori alla scena
         String result = s.click(x, y, state);
+        // se il click é andato a buon fine faccio un repaint senno mostro un messaggio d'errore
         if (result.equals("success")) {
             repaint();
         } else {

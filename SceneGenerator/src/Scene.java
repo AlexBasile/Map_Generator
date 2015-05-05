@@ -10,6 +10,8 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 /*
 
+ Schema di corrispondenza tra numero e elemento della scena
+
  0 = empty
  1 = wall
  2 = seat
@@ -34,25 +36,27 @@ public class Scene {
     //largezza e altezza finestra
     float w_width, w_height;
 
-    //matrice fondamentale rappresentante la scena 
+    //matrice fondamentale rappresentante la scena
     int[][] scene;
 
     //percentuale della finestra che viene occupata dalla scena
     int perc;
 
-    //array di immagini da disegnare sulla scena sono nello stesso ordine dello 
-    //schema di valori della scena però traslato di -1 visto che per le celle 
+    //array di immagini da disegnare sulla scena sono nello stesso ordine dello
+    //schema di valori della scena però traslato di -1 visto che per le celle
     //empty non bisogna disegnare nulla
-    //cioè in 0 c'è wall (1), in 1 c'è seat (2), e cosi via 
+    //cioè in 0 c'è wall (1), in 1 c'è seat (2), e cosi via
     BufferedImage[] images;
 
     public Scene() {
-        
+
     }
 
     public Scene(int num_x, int num_y, float w_width, float w_height) {
+        //dimensione della finestra
         this.w_width = w_width;
         this.w_height = w_height;
+        //imposto la dimensione iniziale della scena
         scene = new int[num_x][num_y];
         //genero la scena della dimensione specificata
         this.resize(num_x, num_y);
@@ -63,8 +67,11 @@ public class Scene {
     }
 
     public void loadImages() {
+        //definisco un array di bufferedimage
         images = new BufferedImage[10];
         try {
+            //carico tutte le immagini memorizzandole nella corretta posizione
+            //dell'array precedentemente creato seguendo lo schema definito in precedenza
             images[0] = ImageIO.read(new File("./img/wall.jpeg"));
             images[1] = ImageIO.read(new File("./img/seat.jpg"));
             images[2] = ImageIO.read(new File("./img/table.jpeg"));
@@ -80,23 +87,40 @@ public class Scene {
 
     }
 
-    public void drawScene(Graphics2D g) {
-        //calcolo le coordinate di inizio della scena partendo a disegnare 
+    public void drawScene(Graphics2D g, float w_width, float w_height) {
+
+        //aggiorno le dimensioni della finestra
+        this.w_width = w_width;
+        this.w_height = w_height;
+        //calcolo la larghezza delle celle
+        c_width = (w_width * perc / 100) / num_x;
+        c_height = (w_height * perc / 100) / num_y;
+
+        //verifico chi delle due dimensioni é minore e setto quella maggiore uguale a quella minore per rendere le celle quadrate
+        if (c_width > c_height) {
+            c_width = c_height;
+        } else {
+            c_height = c_width;
+        }
+
+        //calcolo le coordinate di inizio della scena partendo a disegnare
         //dall'angolo in alto a sinistra della nostra scena
         float x0 = (w_width - c_width * num_x) / 2;
         float y0 = (w_height - c_height * num_y) / 2;
 
+        //setto colore delle scritte
         g.setColor(Color.BLACK);
 
         //doppio ciclo sulla matrice
         for (int i = 0; i < scene.length; i++) {
             for (int j = 0; j < scene[i].length; j++) {
-                //calcolo la posizione x,y dell'angolo in alto a sinistra della 
+                //calcolo la posizione x,y dell'angolo in alto a sinistra della
                 //cella corrente
                 int x = (int) (x0 + i * c_width);
                 int y = (int) (y0 + j * c_height);
                 //se la cella non è vuota, allora disegno l'immagine corrispondente
                 if (scene[i][j] > 0) {
+                    //disegno l'immagine corretta (usando il numero contenuto nella matrice che definisce la scena) nella posizione calcolata e con la dimensione di cella corretta
                     g.drawImage(images[scene[i][j] - 1], x, y, (int) (c_width - 1), (int) (c_height - 1), null);
                 }
 
@@ -124,7 +148,9 @@ public class Scene {
             c_height = c_width;
         }
 
+        //inizializzo la nuova scena per farsi che abbia i muri sul perimetro
         initScene(new_scene);
+        //ricopio ogni cella della vecchia mappa nella nuova mappa senza uscire fuori dalle celle a disposizione
         for (int i = 1; i < new_scene.length - 1; i++) {
             for (int j = 1; j < new_scene[i].length - 1; j++) {
                 if (i <= scene.length - 1 && j <= scene[0].length - 1) {
@@ -137,6 +163,7 @@ public class Scene {
 
     public void initScene(int[][] scene) {
 
+        //imposto i muri sul perimetro
         for (int i = 0; i < scene.length; i++) {
             for (int j = 0; j < scene[i].length; j++) {
                 if (i == 0 || i == scene.length - 1 || j == 0 || j == scene[0].length - 1) {
@@ -165,7 +192,6 @@ public class Scene {
 
     public String exportScene() {
         String map = "(maxduration 100)\n";
-
         //variabili per impostare la posizione delle componenti
         int[] pos_agent = new int[2];
 
@@ -305,9 +331,9 @@ public class Scene {
     public void setCella(int x, int y, int value) {
         scene[x][y] = value;
     }
-    
-    public void setSizeScreen(float w_width, float w_height){
-        this.w_height=w_height;
+
+    public void setSizeScreen(float w_width, float w_height) {
+        this.w_height = w_height;
         this.w_width = w_width;
     }
 }
